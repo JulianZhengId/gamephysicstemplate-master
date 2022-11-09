@@ -2,6 +2,23 @@
 #define MASSSPRINGSYSTEMSIMULATOR_h
 #include "Simulator.h"
 
+struct MassPoint
+{
+public:
+	Vec3 position;
+	Vec3 velocity;
+	Vec3 acceleration;
+	bool isFixed;
+};
+
+struct Spring
+{
+public:
+	int massPoint1;
+	int massPoint2;
+	float initialLength;
+};
+
 // Do Not Change
 #define EULER 0
 #define LEAPFROG 1
@@ -38,7 +55,7 @@ public:
 	void applyExternalForce(Vec3 force);
 	void EulerIntegration();
 	void LeapFrogIntegration();
-	void MidPointIntegration();
+	void MidPointIntegration(float timeStep);
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
@@ -57,5 +74,7 @@ private:
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
+	std::vector<struct MassPoint> massPoints;
+	std::vector<struct Spring> springs;
 };
 #endif
