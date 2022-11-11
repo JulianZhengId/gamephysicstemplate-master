@@ -335,8 +335,8 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
 {
 	switch (m_iIntegrator)
 	{
-	case 0: EulerIntegration(); break;
-	case 1: LeapFrogIntegration(); break;
+	case 0: EulerIntegration(0); break;
+	case 1: LeapFrogIntegration(0); break;
 	case 2: MidPointIntegration(0); break;
 	}
 }
