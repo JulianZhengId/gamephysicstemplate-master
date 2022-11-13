@@ -41,6 +41,7 @@ public:
 	void simulateTimestep(float timeStep);
 	void onClick(int x, int y);
 	void onMouse(int x, int y);
+	const char* getIntegratorStr();
 
 	// Specific Functions
 	void setMass(float mass);
@@ -53,9 +54,14 @@ public:
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
 	void applyExternalForce(Vec3 force);
-	void EulerIntegration();
-	void LeapFrogIntegration();
+	void EulerIntegration(float timeStep);
+	void LeapFrogIntegration(float timeStep);
 	void MidPointIntegration(float timeStep);
+	//Draw
+	void demo123Setup();
+	void drawDemo123();
+	void drawDemo4();
+	void drawDemo5();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
