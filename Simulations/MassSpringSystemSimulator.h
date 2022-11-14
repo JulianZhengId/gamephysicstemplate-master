@@ -48,6 +48,7 @@ public:
 	void setDampingFactor(float damping);
 	int addMassPoint(Vec3 position, Vec3 Velocity, bool isFixed);
 	void addSpring(int masspoint1, int masspoint2, float initialLength);
+	void addCube(MassPoint vertex, float edgeLength);
 	int getNumberOfMassPoints();
 	int getNumberOfSprings();
 	Vec3 getPositionOfMassPoint(int index);
@@ -56,7 +57,15 @@ public:
 	void EulerIntegration(float timeStep);
 	void LeapFrogIntegration(float timeStep);
 	void MidPointIntegration(float timeStep);
-
+	//Draw
+	void demo123Setup();
+	void demo4Setup();
+	void drawDemo123();
+	void drawDemo4();
+	void drawDemo5();
+	//Print
+	void PrintSimulation(float timeStep);
+	
 	// Do Not Change
 	void setIntegrator(int integrator) {
 		m_iIntegrator = integrator;
