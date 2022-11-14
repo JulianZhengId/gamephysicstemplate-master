@@ -61,10 +61,7 @@ public:
 	//Draw
 	void demo123Setup();
 	void demo4Setup();
-	void drawDemo123();
-	void drawDemo4();
-	void drawDemo5();
-	void addCube();
+	void addMultipleMassPoints();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
@@ -77,7 +74,7 @@ private:
 	float m_fStiffness;
 	float m_fDamping;
 	int m_iIntegrator;
-	Vec3 gravity;
+	float gravity;
 
 	// UI Attributes
 	Vec3 m_externalForce;

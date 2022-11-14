@@ -1,7 +1,6 @@
 #include "MassSpringSystemSimulator.h"
-bool grav = false;
 bool collCheck = false;
-float sphereSize = 0.1;
+float sphereSize = 0.01;
 
 MassSpringSystemSimulator::MassSpringSystemSimulator()
 {
@@ -16,7 +15,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator()
 	m_trackmouse = Point2D();
 	massPoints = {};
 	springs = {};
-	gravity = Vec3(0, -0.5, 0);
+	gravity = 0;
 }
 
 const char* MassSpringSystemSimulator::getTestCasesStr() {
@@ -127,7 +126,8 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	case 3:
 		TwAddVarRW(DUC->g_pTweakBar, "Integrator", TW_TYPE_INTEGRATOR, &m_iIntegrator, "");
 		TwAddVarRW(DUC->g_pTweakBar, "Sphere Size", TW_TYPE_FLOAT, &sphereSize, "min=0.01 step=0.01");
-		TwAddButton(DUC->g_pTweakBar, "Add Gravity", [](void* s) {grav ? grav = false : grav = true; }, nullptr, "");
+		//TwAddButton(DUC->g_pTweakBar, "Add Gravity", [](void* s) {grav ? grav = false : grav = true; }, nullptr, "");
+		TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &gravity, "step=0.1 min=0");
 		TwAddButton(DUC->g_pTweakBar, "Collision", [](void* s) {collCheck ? collCheck = false : collCheck = true; }, nullptr, "");
 		break;
 	case 4: 
@@ -158,10 +158,10 @@ void MassSpringSystemSimulator::demo4Setup() {
 	this->applyExternalForce(Vec3(0, 0, 0));
 
 	int p2 = this->addMassPoint(Vec3(0.0, 0.0f, 0), Vec3(-1.0, 0.0f, 0), false);
-	this->addCube();
+	this->addMultipleMassPoints();
 }
 
-void MassSpringSystemSimulator::addCube()
+void MassSpringSystemSimulator::addMultipleMassPoints()
 {
 	addMassPoint(Vec3{ -0.2,0.2,0 }, Vec3(0, 0, 0), false);
 	addMassPoint(Vec3{ 0,0.2,0 }, Vec3(0, 0, 0), false);
@@ -315,10 +315,8 @@ void MassSpringSystemSimulator::EulerIntegration(float timeStep)
 		p0->acceleration = F0 / (m_fMass);
 		p1->acceleration = F1 / (m_fMass);
 
-		if (grav) {
-			p0->acceleration += gravity;
-			p1->acceleration += gravity;
-		}
+		p0->acceleration += Vec3(0, -1 * gravity, 0);
+		p1->acceleration += Vec3(0, -1 * gravity, 0);
 
 		//position
 		p0->position += (h * p0->velocity);
@@ -332,6 +330,8 @@ void MassSpringSystemSimulator::EulerIntegration(float timeStep)
 			collisionCheck(*p0);
 			collisionCheck(*p1);
 		}
+
+		m_externalForce = Vec3(0, 0, 0);
 	}
 }
 
@@ -363,10 +363,8 @@ void MassSpringSystemSimulator::LeapFrogIntegration(float timeStep)
 		p0->acceleration = F0 / (m_fMass);
 		p1->acceleration = F1 / (m_fMass);
 
-		if (grav) {
-			p0->acceleration += gravity;
-			p1->acceleration += gravity;
-		}
+		p0->acceleration += Vec3(0, -1 * gravity, 0);;
+		p1->acceleration += Vec3(0, -1 * gravity, 0);;
 
 		//velocity
 		p0->velocity += (h * p0->acceleration);
@@ -376,12 +374,12 @@ void MassSpringSystemSimulator::LeapFrogIntegration(float timeStep)
 		p0->position += (h * p0->velocity);
 		p1->position += (h * p1->velocity);
 
-		//m_externalForce = Vec3(0, 0, 0);
-
 		if (collCheck) {
 			collisionCheck(*p0);
 			collisionCheck(*p1);
 		}
+
+		m_externalForce = Vec3(0, 0, 0);
 	}
 }
 
@@ -411,10 +409,9 @@ void MassSpringSystemSimulator::MidPointIntegration(float timeStep)
 		//calculate acceleration
 		m1->acceleration = force1 / m_fMass;
 		m2->acceleration = force2 / m_fMass;
-		if (grav) {
-			m1->acceleration += gravity;
-			m2->acceleration += gravity;
-		}
+
+		m1->acceleration += Vec3(0, -1 * gravity, 0);;
+		m2->acceleration += Vec3(0, -1 * gravity, 0);;
 
 		//midpoint position [midPosition = oldPosition + 0.5 * h * oldVelocity]
 		Vec3 m1MidPos = m1->position + 0.5 * h * m1->velocity;
@@ -437,15 +434,13 @@ void MassSpringSystemSimulator::MidPointIntegration(float timeStep)
 		//calculate midpoint acceleration
 		Vec3 m1MidAccel = force1 / m_fMass;
 		Vec3 m2MidAccel = force2 / m_fMass;
-		if (grav) {
-			m1MidAccel += gravity;
-			m2MidAccel += gravity;
-		}
+
+		m1MidAccel += Vec3(0, -1 * gravity, 0);
+		m2MidAccel += Vec3(0, -1 * gravity, 0);
 
 		//Midpoint Velocity [midVelocity = oldVelocity + 0.5 * h * oldAcceleration]
 		Vec3 m1MidVelo = m1->velocity + 0.5 * h * m1->acceleration;
 		Vec3 m2MidVelo = m2->velocity + 0.5 * h * m2->acceleration;
-
 
 		//Actual Result
 		//newPos = oldPos + h * midVelocity
@@ -456,12 +451,12 @@ void MassSpringSystemSimulator::MidPointIntegration(float timeStep)
 		m1->velocity = m1->velocity + h * m1MidAccel;
 		m2->velocity = m2->velocity + h * m2MidAccel;
 
-		//m_externalForce = Vec3(0, 0, 0);
-
 		if (collCheck) {
 			collisionCheck(*m1);
 			collisionCheck(*m2);
 		}
+
+		m_externalForce = Vec3(0, 0, 0);
 	}
 }
 
@@ -485,7 +480,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	if (m_iTestCase == 0) return;
-	float size = 0.01;
+	float size = sphereSize;
 	for (Spring& spring : springs) {
 		MassPoint& m1 = massPoints.at(spring.massPoint1);
 		MassPoint& m2 = massPoints.at(spring.massPoint2);
