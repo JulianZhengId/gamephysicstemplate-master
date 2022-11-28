@@ -101,7 +101,7 @@ int MassSpringSystemSimulator::addMassPoint(Vec3 position, Vec3 Velocity, bool i
 	newMassPoint.velocity = Velocity;
 	newMassPoint.isFixed = isFixed;
 	massPoints.push_back(newMassPoint);
-	return index;	
+	return index;
 }
 
 void MassSpringSystemSimulator::addSpring(int masspoint1, int masspoint2, float initialLength)
@@ -119,7 +119,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	TwType TW_TYPE_INTEGRATOR = TwDefineEnumFromString("Integrator", this->getIntegratorStr());
 	switch (m_iTestCase)
 	{
-	case 0: 
+	case 0:
 		break;
 	case 1: break;
 	case 2: break;
@@ -130,7 +130,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 		TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &gravity, "step=0.1 min=0");
 		TwAddButton(DUC->g_pTweakBar, "Collision", [](void* s) {collCheck ? collCheck = false : collCheck = true; }, nullptr, "");
 		break;
-	case 4: 
+	case 4:
 		break;
 	default: break;
 	}
