@@ -226,7 +226,7 @@ namespace collisionTools{
 	{
 		std::vector<XMVECTOR> corners = getCorners(obj2World);
 		float min = 1000;
-		XMVECTOR vertex;
+		XMVECTOR vertex = XMVectorReplicate(0.0f);;
 		for (int i = 0; i < corners.size(); i++)
 		{
 			float value = XMVectorGetX(XMVector3Dot(corners[i], toCenter));
@@ -329,7 +329,7 @@ namespace collisionTools{
 		}
 		// if we get here then we know that every axis had overlap on it
 		// so we can guarantee an intersection
-		XMVECTOR normal;
+		XMVECTOR normal = XMVectorReplicate(0.0f);
 		switch (fromWhere){
 		case 0:{
 				   normal = axis;

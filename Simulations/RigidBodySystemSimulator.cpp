@@ -63,16 +63,19 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 		std::cout << "position: " << rigidBodies[0].position << "\n";
 		std::cout << "velocity: " << rigidBodies[0].velocity << "\n";
 		std::cout << "angular velocity: " << rigidBodies[0].angularVelocity << "\n";
-		std::cout << "angular momentum: " << rigidBodies[0].angularMomentum << "\n";
+		std::cout << "angular momentum: " << rigidBodies[0].angularMomentum << "\n\n";
 		break;
 	case 1: //Demo2
 		std::cout << "Demo2!\n";
+		demo1Setup();
 		break;
 	case 2: //Demo3
 		std::cout << "Demo3!\n";
+		demo3Setup();
 		break;
 	case 3: //Demo4
 		std::cout << "Demo4!\n";
+		demo4Setup();
 		break;
 	default:
 		std::cout << "Empty Demo!\n";
@@ -87,6 +90,32 @@ void RigidBodySystemSimulator::demo1Setup()
 	this->setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5f));
 	this->applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
 }
+
+void RigidBodySystemSimulator::demo3Setup() 
+{
+	rigidBodies = {};
+	this->addRigidBody(Vec3(-0.1f, -0.2f, 0.1f), Vec3(0.4f, 0.2f, 0.2f), 100.0f);
+	this->addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 100.0);
+	this->setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.25f));
+	this->applyForceOnBody(0, Vec3(0.0, 0.0f, 0.0), Vec3(0, 0, 200));
+	this->setVelocityOf(1, Vec3(0.0f, -0.1f, 0.05f));
+}
+
+void RigidBodySystemSimulator::demo4Setup() 
+{
+	rigidBodies = {};
+	//Ground Floor
+	float infinityMass = std::numeric_limits<float>::max();
+	this->addRigidBody(Vec3(0.0, -0.5f, 0.05), Vec3(10.0f, 0.001f, 10.0f), infinityMass);
+
+	//Box1
+	//this->addRigidBody(Vec3(-0.1f, -0.2f, 0.1f), Vec3(0.4f, 0.2f, 0.2f), 100.0f);
+	this->addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 100.0);
+	this->setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.25f));
+	//this->applyForceOnBody(0, Vec3(0.0, 0.0f, 0.0), Vec3(0, 0, 200));
+	this->setVelocityOf(1, Vec3(0.0f, -0.1f, 0.05f));
+}
+
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
@@ -110,9 +139,10 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		rb->position += timeStep * rb->velocity;
 		rb->velocity += timeStep * totalForce / rb->mass;
 
+
 		//update quaternion
-		Quat q = Quat(0, rb->angularVelocity.x, rb->angularVelocity.y, rb->angularVelocity.z) * rb->orientation;
-		rb->orientation += timeStep / 2 * q;
+		rb->orientation += timeStep / 2.0f * Quat(rb->angularVelocity.x, rb->angularVelocity.y, rb->angularVelocity.z, 0) * rb->orientation;
+		rb->orientation.normSq();
 
 		//update angular momentum
 		rb->angularMomentum += timeStep * torque;
@@ -125,7 +155,8 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		//calculate angular velocity
 		rb->angularVelocity = inversedCurrentInertiaTensor * rb->angularMomentum;
 
-		//update world position (?)
+		//check collision
+		check(rb);
 
 		//clean forces
 		m_externalForce = Vec3(0, 0, 0);
@@ -133,9 +164,90 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 	}
 }
 
+void RigidBodySystemSimulator::check(RigidBody* rb) {
+	for (int i = 0; i < rigidBodies.size(); i++) {
+		struct RigidBody* otherRb = &rigidBodies.at(i);
+
+		if (rb == otherRb) continue;
+
+		makeCollision(rb, otherRb);
+	}
+}
+
+void RigidBodySystemSimulator::makeCollision(RigidBody* A, RigidBody* B) {
+	//first detect if collision is valid
+	//if so, calculate impulse, and update velocity / angular momentum
+
+	Mat4 obj2World_A = TransferMatrix(A);
+	Mat4 obj2World_B = TransferMatrix(B);
+
+	CollisionInfo collisionCheck = checkCollisionSAT(obj2World_A, obj2World_B);
+
+	if (collisionCheck.isValid) {
+		Vec3 normal = collisionCheck.normalWorld;
+
+		Vec3 collisionRelPositionA = collisionCheck.collisionPointWorld - A->position;
+		Vec3 collisionRelPositionB = collisionCheck.collisionPointWorld - B->position;
+		Vec3 vi_A = A->velocity + A->angularVelocity * collisionRelPositionA;
+		Vec3 vi_B = B->velocity + B->angularVelocity * collisionRelPositionB;
+		Vec3 v_Rel = vi_A - vi_B;
+
+		//A current inertia tensor
+		matrix4x4<double> rotationMatrixA = A->orientation.getRotMat();
+		matrix4x4<double> inversedRotationMatrixA = rotationMatrixA.inverse();
+		matrix4x4<double> inversedCurrentInertiaTensorA = (rotationMatrixA * A->inversedInitialInertiaTensor * inversedRotationMatrixA);
+
+		//B current inertia tensor
+		matrix4x4<double> rotationMatrixB = B->orientation.getRotMat();
+		matrix4x4<double> inversedRotationMatrixB = rotationMatrixB.inverse();
+		matrix4x4<double> inversedCurrentInertiaTensorB = (rotationMatrixB * B->inversedInitialInertiaTensor * inversedRotationMatrixB);
+		
+		Vec3 impulse = (-1 * (1 + bounciness) * v_Rel * collisionCheck.normalWorld);
+		Vec3 crossA = cross(inversedCurrentInertiaTensorA * cross(collisionRelPositionA, normal), collisionRelPositionA);
+		Vec3 crossB = cross(inversedCurrentInertiaTensorB * cross(collisionRelPositionB, normal), collisionRelPositionB);
+		impulse /= 	(1.0f / A->mass + 1.0f / B->mass + (crossA + crossB) * normal);
+
+		//update velocity and angular momentum
+		A->velocity += impulse * collisionCheck.normalWorld / A->mass;
+		B->velocity -= impulse * collisionCheck.normalWorld / B->mass;
+		
+		A->angularMomentum += cross(collisionRelPositionA, (impulse * collisionCheck.normalWorld));
+		B->angularMomentum -= cross(collisionRelPositionB, (impulse * collisionCheck.normalWorld));
+	}
+
+}
+
+Mat4 RigidBodySystemSimulator::TransferMatrix(RigidBody* rb) {
+	//set Matrix
+	Mat4 scaleMat, rotMat, translationMat;
+
+	scaleMat.initScaling(rb->size.x, rb->size.y, rb->size.z);
+	rotMat = rb->orientation.getRotMat();
+	translationMat.initTranslation(rb->position.x, rb->position.y, rb->position.z);
+
+	return scaleMat * rotMat * translationMat;
+	//scaleMat * rotMat * translationMat
+}
+
+
 void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	if (m_iTestCase == 0) return;
+	DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
+
+
+	for (RigidBody& rb : rigidBodies) {
+		//set Matrix
+		Mat4 scaleMat, rotMat, translationMat;
+
+		scaleMat.initScaling(rb.size.x, rb.size.y, rb.size.z);
+		
+		rotMat = rb.orientation.getRotMat();
+		translationMat.initTranslation(rb.position.x, rb.position.y, rb.position.z);
+
+		DUC->drawRigidBody(scaleMat * rotMat * translationMat);
+		//scaleMat * rotMat * translationMat
+	}
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)

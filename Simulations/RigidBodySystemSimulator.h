@@ -1,6 +1,7 @@
 #ifndef RIGIDBODYSYSTEMSIMULATOR_h
 #define RIGIDBODYSYSTEMSIMULATOR_h
 #include "Simulator.h"
+#include "collisionDetect.h"
 //add your header for your rigid body system, for e.g.,
 //#include "rigidBodySystem.h" 
 
@@ -54,12 +55,18 @@ public:
 	// Additional Functions
 	void applyExternalForce(Vec3 force);
 	void demo1Setup();
+	void demo3Setup();
+	void demo4Setup();
+	void makeCollision(RigidBody* A, RigidBody* B);
+	Mat4 TransferMatrix(RigidBody* rb);
+	void check(RigidBody* rb);
 
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
 	// RigidBodySystem * m_pRigidBodySystem;
 	std::vector<struct RigidBody> rigidBodies;
+	int bounciness = 1;
 
 	Vec3 m_externalForce;
 
