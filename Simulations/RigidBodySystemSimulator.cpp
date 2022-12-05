@@ -9,6 +9,7 @@ RigidBodySystemSimulator::RigidBodySystemSimulator()
 	m_trackmouse = Point2D();
 	gravity = 0;
 	rigidBodies = {};
+	bounciness = 0;
 }
 
 const char* RigidBodySystemSimulator::getTestCasesStr() {
@@ -24,9 +25,8 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	case 1: break; //demo2
 	case 2: break; //demo3
 	case 3: //demo4
+		TwAddVarRW(DUC->g_pTweakBar, "Bounciness", TW_TYPE_FLOAT, &bounciness, "step=0.05 min=0 max=1");
 		TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &gravity, "step=0.005 min=0");
-		break;
-	case 4:
 		break;
 	default: break;
 	}
@@ -100,6 +100,8 @@ void RigidBodySystemSimulator::demo1Setup()
 {
 	rigidBodies = {};
 	gravity = 0;
+	bounciness = 0;
+
 	this->addRigidBody(Vec3(0, 0, 0), Vec3(1.0f, 0.6f, 0.5f), 2);
 	this->setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5f));
 	this->applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
@@ -109,6 +111,8 @@ void RigidBodySystemSimulator::demo3Setup()
 {
 	rigidBodies = {};
 	gravity = 0;
+	bounciness = 0;
+
 	//Box 0 - Bottom
 	this->addRigidBody(Vec3(-0.1f, -0.2f, 0.1f), Vec3(0.4f, 0.2f, 0.2f), 5);
 	this->setOrientationOf(0, Quat(Vec3(0.0f, 1.0f, 0.0f), (float)(M_PI) * 0.25f));
@@ -124,11 +128,13 @@ void RigidBodySystemSimulator::demo4Setup()
 {
 	rigidBodies = {};
 	gravity = 0;
+	bounciness = 0;
+
 	//Ground Floor
 	this->addRigidBody(Vec3(0.0, -0.75f, 0.05), Vec3(10.0f, 0.2f, 10.0f), std::numeric_limits<double>::max());
 	this->setIsFixed(0, true);
 		
-	//Box 0 - Cetnter
+	//Box 0 - Center
 	this->addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 5);
 	this->setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.25f));
 	this->setVelocityOf(1, Vec3(0.0f, -0.01f, 0.025f));
