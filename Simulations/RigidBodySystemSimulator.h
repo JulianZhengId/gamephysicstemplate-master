@@ -16,7 +16,8 @@ public:
 	Vec3 velocity;
 	Vec3 angularVelocity;
 	Vec3 angularMomentum;
-	matrix4x4<double> inversedInitialInertiaTensor;
+	Mat4 inversedInitialInertiaTensor;
+	bool isFixed = false;
 	std::vector<struct ForceOnBody*> forces;
 };
 
@@ -57,9 +58,10 @@ public:
 	void demo1Setup();
 	void demo3Setup();
 	void demo4Setup();
-	void makeCollision(RigidBody* A, RigidBody* B);
+	void collisionResponse(RigidBody* A, RigidBody* B);
 	Mat4 TransferMatrix(RigidBody* rb);
-	void check(RigidBody* rb);
+	void checkCollision(RigidBody* rb);
+	void setIsFixed(int i, bool isFixed);
 
 private:
 	// Attributes
@@ -67,6 +69,7 @@ private:
 	// RigidBodySystem * m_pRigidBodySystem;
 	std::vector<struct RigidBody> rigidBodies;
 	int bounciness = 1;
+	float gravity;
 
 	Vec3 m_externalForce;
 
